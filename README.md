@@ -12,17 +12,17 @@ This is a program that is used to scramble/encrypt files on your computer.
 Do not use this program to do malicious things with.
 I am not responsible for any damage that you do with this software.
 
-To Run the Program Use the following commands:
+**To Run the Program Use the following commands:** <br />
+ <br />
+***Linux:*** <br />
+python -m virtualenv env <br />
+source env/bin/activate <br />
+pip install -r requirements.txt <br />
 
-Linux:
-python -m virtualenv env
-source env/bin/activate
-pip install -r requirements.txt
+***Windows:*** <br />
+python -m virtualenv env <br />
+.\env\Scripts\activate <br />
+pip install -r requirements.txt <br />
 
-Windows:
-python -m virtualenv env
-.\env\Scripts\activate
-pip install -r requirements.txt
-
-Deactivating Virtual Environment Linux/Windows:
-deactivate
+***Deactivating Virtual Environment Linux/Windows:*** <br />
+deactivate <br />
