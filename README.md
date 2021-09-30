@@ -18,11 +18,13 @@ I am not responsible for any damage that you do with this software.
 python -m virtualenv env <br />
 source env/bin/activate <br />
 pip install -r requirements.txt <br />
+python file_encryption.py --help<br />
 
 ***Windows:*** <br />
 python -m virtualenv env <br />
 .\env\Scripts\activate <br />
 pip install -r requirements.txt <br />
+python file_encryption.py --help<br />
 
 ***Deactivating Virtual Environment Linux/Windows:*** <br />
 deactivate <br />
