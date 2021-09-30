@@ -64,7 +64,6 @@ def load_key(file_name):
 def decrypt_data(key, file_path, mode):
     if mode == "AES":
         try:
-            cipher = AES.new(key["key"], iv=key["iv"], mode=AES.MODE_CFB)
             # decrypting data
             # if the file_path is not absolute make it absolute
             if not os.path.isabs(file_path):
@@ -72,6 +71,8 @@ def decrypt_data(key, file_path, mode):
 
             # decrypt data
             with open(file_path, "rb") as encrypted_file:
+
+                cipher = AES.new(key["key"], iv=key["iv"], mode=AES.MODE_CFB)
                 decrypted_data = cipher.decrypt(encrypted_file.read())
 
                 # Write the file with the correct unique filename
@@ -114,7 +115,7 @@ def encrypt_data(key, file_path, mode):
 
 def directory_encrypt(directory, key_size, mode, pickle_key={}):
     for x in os.listdir(directory):
-        if ("fun-scripts" not in directory) and ("fun-scripts" not in x):
+        if ("scrambler" not in directory.lower()) and ("scrambler" not in x.lower()):
             if os.path.isdir(os.path.join(directory, x)):
                 # Check to see if python is contained in the folder path. if it is do not attempt to encrypt any of the below folders or files
                 directory_encrypt(os.path.join(directory, x), key_size, mode, pickle_key)
@@ -273,10 +274,22 @@ def decrypt(directory, key_path, mode, file_path):
         # if user did not enter ask 
         if key_path == None:
             key_path = fd.askopenfilename(title="Select the key", initialdir=os.path.split(file_path)[0])
+            # load the key and decrypt
+            key = load_key(key_path)
+            decrypt_data(key, file_path, mode)
+            click.echo("Done!")
+        else:
+            # find the hash of the file
+            # Read and update hash string value in blocks of 4k
+            sha256_hash = hashlib.sha256()
+            with open(file_path, "rb") as f:
+                # Read and update hash string value in blocks of 4k
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+                hashed_file = sha256_hash.hexdigest()
+            decrypt_data(load_key(key_path)[hashed_file], file_path, mode)
+            click.echo("Done!")
 
-        # load the key and decrypt
-        key = load_key(key_path)
-        decrypt_data(key, file_path, mode)
     # for directory encryption
     elif file_path == None:
         # if user did not enter ask 
