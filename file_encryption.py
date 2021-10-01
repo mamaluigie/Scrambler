@@ -7,7 +7,7 @@ import hashlib
 from Cryptodome.Cipher import AES
 from tkinter import filedialog as fd
 
-# ---------------------------- The main group with all of the commands in it -------------------
+# ---------------------------- MAIN WITH ALL OF THE GROUP COMMANDS -------------------
 @click.group()
 def main():
     """ ░██████╗░█████╗░██████╗░░█████╗░███╗░░░███╗██████╗░██╗░░░░░███████╗██████╗░
@@ -19,9 +19,7 @@ def main():
 
                  ___The program is designed to scramble(encrypt) files___ 
         """
-#------------------------------------------------------------------------------------------------------------------
-# ----------------------- Functions to assist with the process ---------------------------------
-#------------------------------------------------------------------------------------------------------------------
+# ----------------------- FUNCTIONS TO ASSIST WITH THE PROCESS ---------------------------------
 
 
 # ----------------------- Reading and Writing the Keys ---------------------------------
@@ -165,9 +163,7 @@ def directory_decrypt(directory, key, mode):
             if hashed_file in keychain.keys():
                 decrypt_data(keychain[hashed_file], os.path.join(directory, x), mode)
 
-#------------------------------------------------------------------------------------------------------------------
-# -------------------------------------- Commands --------------------------------------
-#------------------------------------------------------------------------------------------------------------------
+# -------------------------------------- COMMANDS --------------------------------------
 
 # -------------------------------------- Generate Key Command --------------------------------------
 
@@ -239,6 +235,7 @@ def encrypt(directory, key_path, mode, key_size, file_path):
             pickle.dump(x, pickled_key)
             
         click.echo("Done!")
+
 # -------------------------------------- decrypt command --------------------------------------
 
 @main.command()
@@ -289,7 +286,6 @@ def decrypt(directory, key_path, mode, file_path):
             key_path = fd.askopenfilename(title="Select the key", initialdir=directory)
         directory_decrypt(directory, key_path, mode)
         click.echo("Done!")
-
 
 # -------------------------------------------------------------------------------------------------------------------------------
 
