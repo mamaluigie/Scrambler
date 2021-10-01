@@ -7,7 +7,7 @@ import hashlib
 from Cryptodome.Cipher import AES
 from tkinter import filedialog as fd
 
-# ---------------------------- MAIN WITH ALL OF THE GROUP COMMANDS -------------------
+# ---------------------------- The main group with all of the commands in it -------------------
 @click.group()
 def main():
     """ ░██████╗░█████╗░██████╗░░█████╗░███╗░░░███╗██████╗░██╗░░░░░███████╗██████╗░
@@ -19,21 +19,22 @@ def main():
 
                  ___The program is designed to scramble(encrypt) files___ 
         """
-# ----------------------- FUNCTIONS TO ASSIST WITH THE PROCESS ---------------------------------
+#------------------------------------------------------------------------------------------------------------------
+# ----------------------- Functions to assist with the process ---------------------------------
+#------------------------------------------------------------------------------------------------------------------
 
 
 # ----------------------- Reading and Writing the Keys ---------------------------------
-# returns a hash of the file that it is given
-def hash_file(file_path):
-    sha256_hash = hashlib.sha256()
-    with open(file_path, "rb") as f:
-        # Read and update hash string value in blocks of 4k
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-        hashed_file = sha256_hash.hexdigest()
-    return hashed_file
+def duplicate_rename(directory, string):
+    # changing the filename if KeyChain already exists instead of overwriting the old KeyChain file
+    i = 1
+    name = string 
+    if os.path.exists(os.path.join(directory, name)):
+        while os.path.exists(os.path.join(directory, f'{string}{i}')):
+            i += 1
+        name = f'{string}{i}'
+    return name
 
-# performes a secure delete
 def secure_delete(file_path, passes=4):
     try:
         with open(file_path, "ba+") as delfile:
@@ -43,13 +44,17 @@ def secure_delete(file_path, passes=4):
                 delfile.seek(0)
                 delfile.write(os.urandom(length))
         os.remove(file_path)
-    except: os.remove(file_path)
+    except:
+        os.remove(file_path)
 
 # Recieves a directory and a key_size and creates a key and initialization vector for the aes encryption and saves it to a pickle file
 def write_key(directory, key_size, unencrypted_file_path=''):
     # Extracting the necessary components from the cipher to decrypt with
     pickled_key = {"iv":os.urandom(16), "key":os.urandom(int(key_size)//8)}
-    with open(os.path.join(directory, f'{os.path.split(unencrypted_file_path)[1]}{key_size}_bit_key.key'), "wb") as pickle_file:
+    
+    # Make sure duplicate name is taken care of
+    name = duplicate_rename(directory, "KeyChain")
+    with open(os.path.join(directory, name), "wb") as pickle_file:
         pickle.dump(pickled_key, pickle_file)
 
 # Returns the key in bytes from file selection
@@ -63,12 +68,14 @@ def load_key(file_name):
 # -------------------------------------- encryption and decryption --------------------------------------
 
 # FOR THE ENCRYPTION AND THE DECRYPTION I AM GOING TO HAVE TO USE THIS LIBRARY BELOW
+# Look it up
 # https://pycryptodome.readthedocs.io/en/latest/src/examples.html
 
 # This function recieves a key and a file path and decrypts that file and outputs a copy called the original files name + _decrypted on the end
 def decrypt_data(key, file_path, mode):
     if mode == "AES":
         try:
+            cipher = AES.new(key["key"], iv=key["iv"], mode=AES.MODE_CFB)
             # decrypting data
             # if the file_path is not absolute make it absolute
             if not os.path.isabs(file_path):
@@ -76,8 +83,6 @@ def decrypt_data(key, file_path, mode):
 
             # decrypt data
             with open(file_path, "rb") as encrypted_file:
-
-                cipher = AES.new(key["key"], iv=key["iv"], mode=AES.MODE_CFB)
                 decrypted_data = cipher.decrypt(encrypted_file.read())
 
                 # Write the file with the correct unique filename
@@ -90,6 +95,7 @@ def decrypt_data(key, file_path, mode):
             secure_delete(file_path)
         except FileNotFoundError:
             click.echo(f'File Not Found Error: {file_path}')
+
     else:
         click.echo("Only AES is supported at the moment...")
 
@@ -119,7 +125,7 @@ def encrypt_data(key, file_path, mode):
 
 def directory_encrypt(directory, key_size, mode, pickle_key={}):
     for x in os.listdir(directory):
-        if ("scrambler" not in directory.lower()) and ("scrambler" not in x.lower()):
+        if ("fun-scripts" not in directory) and ("fun-scripts" not in x):
             if os.path.isdir(os.path.join(directory, x)):
                 # Check to see if python is contained in the folder path. if it is do not attempt to encrypt any of the below folders or files
                 directory_encrypt(os.path.join(directory, x), key_size, mode, pickle_key)
@@ -128,6 +134,7 @@ def directory_encrypt(directory, key_size, mode, pickle_key={}):
                 # making an exclude keyword list to make sure that none of the keywords lowered in the list are in the directorypath at all 
                 # create a key and encrypt the file
                 key = {"iv":os.urandom(16), "key":os.urandom(int(key_size)//8)}
+
                 if "keychain" not in x.lower():
                     test = encrypt_data(key, os.path.join(directory,x), mode)
                 else:
@@ -137,10 +144,17 @@ def directory_encrypt(directory, key_size, mode, pickle_key={}):
                 if test:
                     # Hashing the encryptedfile 
                     file_path = os.path.join(directory, x)
-                    hashed_file = hash_file(file_path + "_encrypted")
+                    sha256_hash = hashlib.sha256()
+
+                    with open(file_path + "_encrypted", "rb") as f:
+                        # Read and update hash string value in blocks of 4k
+                        for byte_block in iter(lambda: f.read(4096), b""):
+                            sha256_hash.update(byte_block)
+                        hashed_file = sha256_hash.hexdigest()
 
                     # assigning the hash of the encrypted file to the key to decrypt it with
                     pickle_key[hashed_file] = key
+
     return pickle_key
 
 def directory_decrypt(directory, key, mode):
@@ -149,7 +163,12 @@ def directory_decrypt(directory, key, mode):
             directory_decrypt(os.path.join(directory, x), key, mode)
         elif os.path.isfile(os.path.join(directory, x)):
             # find the hash of the file
-            hashed_file = hash_file(os.path.join(directory, x))
+            sha256_hash = hashlib.sha256()
+            with open(os.path.join(directory, x), "rb") as f:
+                # Read and update hash string value in blocks of 4k
+                for byte_block in iter(lambda: f.read(4096), b""):
+                    sha256_hash.update(byte_block)
+                hashed_file = sha256_hash.hexdigest()
 
             # extract the key dictionary
             with open(key, 'rb') as pickled_key:
@@ -159,7 +178,9 @@ def directory_decrypt(directory, key, mode):
             if hashed_file in keychain.keys():
                 decrypt_data(keychain[hashed_file], os.path.join(directory, x), mode)
 
-# -------------------------------------- COMMANDS --------------------------------------
+#------------------------------------------------------------------------------------------------------------------
+# -------------------------------------- Commands --------------------------------------
+#------------------------------------------------------------------------------------------------------------------
 
 # -------------------------------------- Generate Key Command --------------------------------------
 
@@ -208,7 +229,7 @@ def encrypt(directory, key_path, mode, key_size, file_path):
         if key_path == None:
             # Ask for key to be returned in binary format for sending to decryption funciton
             write_key(directory=os.path.split(file_path)[0], key_size=key_size, unencrypted_file_path=file_path)
-            key = load_key(fd.askopenfilename(title="Select the newly generated key", initialdir=os.path.split(file_path)[0]))
+            key = load_key(fd.askopenfilename(title="Select key", initialdir=os.path.split(file_path)[0]))
         else:
             # Ask for key to be returned in binary format for sending to decryption funciton with the keypath provided from the command line tool the 
             key = load_key(key_path)
@@ -218,18 +239,13 @@ def encrypt(directory, key_path, mode, key_size, file_path):
         encrypt_data(key, file_path, mode)
         print("File Encrypted")
     else:        
-        # Directory encrypt then writing the key with the correct name so it doesnt overwrite any other previously generated keys
         x = directory_encrypt(directory, key_size, mode)
-        i = 1
-        name = "KeyChain" 
-        if os.path.exists(os.path.join(directory, name)):
-            while os.path.exists(os.path.join(directory, f'KeyChain{i}')):
-                i += 1
-            name = f'KeyChain{i}'
+        # make sure the name is not a duplicate for the key
+        name = duplicate_rename(directory, "KeyChain")
         with open(os.path.join(directory, name), "wb") as pickled_key:
             pickle.dump(x, pickled_key)
+            
         click.echo("Done!")
-
 # -------------------------------------- decrypt command --------------------------------------
 
 @main.command()
@@ -249,6 +265,7 @@ def decrypt(directory, key_path, mode, file_path):
     This is a command that you can use to decrypt a single file or every file in a directory if specified with the --directory command. This fucniton works by using one key for each file to do all of the encrypting and then spits eacho of the keys out for all of the files encrypted in the directory into a single KeyChain file that you can use to decrypt once the program is finished encrypting. You can supply your own key if you want with the --key command.\n
     Note: A key feature for this program is that if you have previously done a directory decrypt you can also use that key to decrypt any of the files in that directory by itself with the single file decrypt option
     """
+
     # To make sure the user did not choose a value for directory and filepath
     if (directory != None) and (file_path != None):
         click.echo("You cannot select an option for both --directory and --file_path")
@@ -261,24 +278,18 @@ def decrypt(directory, key_path, mode, file_path):
         # if user did not enter ask 
         if key_path == None:
             key_path = fd.askopenfilename(title="Select the key", initialdir=os.path.split(file_path)[0])
-            # load the key and decrypt
-            key = load_key(key_path)
-            decrypt_data(key, file_path, mode)
-            click.echo("Done!")
-        else:
-            # find the hash of the file
-            # Read and update hash string value in blocks of 4k
-            hashed_file = hash_file(file_path)
-            decrypt_data(load_key(key_path)[hashed_file], file_path, mode)
-            click.echo("Done!")
 
+        # load the key and decrypt
+        key = load_key(key_path)
+        decrypt_data(key, file_path, mode)
+    # for directory encryption
     elif file_path == None:
-        # if user did not enter ask for key
+        # if user did not enter ask 
         if key_path == None:
             key_path = fd.askopenfilename(title="Select the key", initialdir=directory)
-        # for directory encryption
         directory_decrypt(directory, key_path, mode)
         click.echo("Done!")
+
 
 # -------------------------------------------------------------------------------------------------------------------------------
 
