@@ -179,7 +179,7 @@ def generate_key(location, key_size):
 
 @main.command()
 @click.option('--directory', '-d', default=None, required=False,
-        help="Very versitile feature that allows for you to encrypt a directory and all sub directories. All of the keys are saved to a dictionary that which each key corresponds with the hash of the encrypted file it belongs to. I call this the key ring. This can later be used to decrypt any file that matches its corresponding key.")
+        help="Very versitile feature that allows for you to encrypt a directory and all sub directories. All of the keys are saved to a dictionary that which each key corresponds with the hash of the encrypted file it belongs to. I call this the key ring. This can later be used to decrypt any file that matches its corresponding key. This key also works for decrypting single files that was encrypted from the key that is produced from a directory decrypt and a file from the directory which the directory encryption took place.")
 
 @click.option("--key-path","-k", default=None, 
         help="If this option if used then it is expecting for the user to enter the full file path for where the key is located. If none is specified then filedialogue will appear for you to pick the file for where the key is located.")
@@ -234,7 +234,7 @@ def encrypt(directory, key_path, mode, key_size, file_path):
 
 @main.command()
 @click.option('--directory', '-d',  default=None,
-        help="Selecting this lets you decrypt with a corresponding keychain. You can select a keychain dictionary pickle file that corresponds to a previously encrypted directory and use that to select any directory of your choice. Once you select anotther directory this program will then scan that directory recursively trying to match each of the files hash to see if it exists inside of the keychain. If it does not exist inside of the python dictionary keychain then the file is simply skipped and not attempted to be decrypted. If a match is found it will be decrypted with its corresponding key found in the un-pickled dictionary keychain.")
+        help="Selecting this lets you decrypt with a corresponding keychain. You can select a keychain dictionary pickle file that corresponds to a previously encrypted directory and use that to select any directory of your choice. Once you select another directory this program will then scan that directory recursively trying to match each of the files hash to see if it exists inside of the keychain. If it does not exist inside of the python dictionary keychain then the file is simply skipped and not attempted to be decrypted. If a match is found it will be decrypted with its corresponding key found in the un-pickled dictionary keychain.")
 
 @click.option("--key-path","-k", default=None, 
         help="If this option if used then it is expecting for the user to enter the full file path for where the key is located. If none is specified then filedialogue will appear for you to pick the file for where the key is located.")
