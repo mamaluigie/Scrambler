@@ -25,6 +25,14 @@ def main():
 
 
 # ----------------------- Reading and Writing the Keys ---------------------------------
+def hash_file(file_path):
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        # Read and update hash string value in blocks of 4k
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+        hashed_file = sha256_hash.hexdigest()
+    return hashed_file
 
 def secure_delete(file_path, passes=4):
 
@@ -134,13 +142,7 @@ def directory_encrypt(directory, key_size, mode, pickle_key={}):
                 if test:
                     # Hashing the encryptedfile 
                     file_path = os.path.join(directory, x)
-                    sha256_hash = hashlib.sha256()
-
-                    with open(file_path + "_encrypted", "rb") as f:
-                        # Read and update hash string value in blocks of 4k
-                        for byte_block in iter(lambda: f.read(4096), b""):
-                            sha256_hash.update(byte_block)
-                        hashed_file = sha256_hash.hexdigest()
+                    hashed_file = hash_file(file_path + "_encrypted")
 
                     # assigning the hash of the encrypted file to the key to decrypt it with
                     pickle_key[hashed_file] = key
@@ -153,12 +155,7 @@ def directory_decrypt(directory, key, mode):
             directory_decrypt(os.path.join(directory, x), key, mode)
         elif os.path.isfile(os.path.join(directory, x)):
             # find the hash of the file
-            sha256_hash = hashlib.sha256()
-            with open(os.path.join(directory, x), "rb") as f:
-                # Read and update hash string value in blocks of 4k
-                for byte_block in iter(lambda: f.read(4096), b""):
-                    sha256_hash.update(byte_block)
-                hashed_file = sha256_hash.hexdigest()
+            hashed_file = hash_file(os.path.join(directory, x))
 
             # extract the key dictionary
             with open(key, 'rb') as pickled_key:
@@ -281,12 +278,7 @@ def decrypt(directory, key_path, mode, file_path):
         else:
             # find the hash of the file
             # Read and update hash string value in blocks of 4k
-            sha256_hash = hashlib.sha256()
-            with open(file_path, "rb") as f:
-                # Read and update hash string value in blocks of 4k
-                for byte_block in iter(lambda: f.read(4096), b""):
-                    sha256_hash.update(byte_block)
-                hashed_file = sha256_hash.hexdigest()
+            hashed_file = hash_file(file_path)
             decrypt_data(load_key(key_path)[hashed_file], file_path, mode)
             click.echo("Done!")
 
