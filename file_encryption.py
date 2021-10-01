@@ -33,7 +33,6 @@ def hash_file(file_path):
     return hashed_file
 
 def secure_delete(file_path, passes=4):
-
     try:
         with open(file_path, "ba+") as delfile:
             length = delfile.tell()
@@ -42,8 +41,7 @@ def secure_delete(file_path, passes=4):
                 delfile.seek(0)
                 delfile.write(os.urandom(length))
         os.remove(file_path)
-    except:
-        os.remove(file_path)
+    except: os.remove(file_path)
 
 # Recieves a directory and a key_size and creates a key and initialization vector for the aes encryption and saves it to a pickle file
 def write_key(directory, key_size, unencrypted_file_path=''):
@@ -91,7 +89,6 @@ def decrypt_data(key, file_path, mode):
             secure_delete(file_path)
         except FileNotFoundError:
             click.echo(f'File Not Found Error: {file_path}')
-
     else:
         click.echo("Only AES is supported at the moment...")
 
@@ -130,7 +127,6 @@ def directory_encrypt(directory, key_size, mode, pickle_key={}):
                 # making an exclude keyword list to make sure that none of the keywords lowered in the list are in the directorypath at all 
                 # create a key and encrypt the file
                 key = {"iv":os.urandom(16), "key":os.urandom(int(key_size)//8)}
-
                 if "keychain" not in x.lower():
                     test = encrypt_data(key, os.path.join(directory,x), mode)
                 else:
@@ -144,7 +140,6 @@ def directory_encrypt(directory, key_size, mode, pickle_key={}):
 
                     # assigning the hash of the encrypted file to the key to decrypt it with
                     pickle_key[hashed_file] = key
-
     return pickle_key
 
 def directory_decrypt(directory, key, mode):
@@ -222,18 +217,16 @@ def encrypt(directory, key_path, mode, key_size, file_path):
         encrypt_data(key, file_path, mode)
         print("File Encrypted")
     else:        
+        # Directory encrypt then writing the key with the correct name so it doesnt overwrite any other previously generated keys
         x = directory_encrypt(directory, key_size, mode)
-        # changing the filename if KeyChain already exists instead of overwriting the old KeyChain file
         i = 1
         name = "KeyChain" 
         if os.path.exists(os.path.join(directory, name)):
             while os.path.exists(os.path.join(directory, f'KeyChain{i}')):
                 i += 1
             name = f'KeyChain{i}'
-
         with open(os.path.join(directory, name), "wb") as pickled_key:
             pickle.dump(x, pickled_key)
-            
         click.echo("Done!")
 
 # -------------------------------------- decrypt command --------------------------------------
@@ -255,7 +248,6 @@ def decrypt(directory, key_path, mode, file_path):
     This is a command that you can use to decrypt a single file or every file in a directory if specified with the --directory command. This fucniton works by using one key for each file to do all of the encrypting and then spits eacho of the keys out for all of the files encrypted in the directory into a single KeyChain file that you can use to decrypt once the program is finished encrypting. You can supply your own key if you want with the --key command.\n
     Note: A key feature for this program is that if you have previously done a directory decrypt you can also use that key to decrypt any of the files in that directory by itself with the single file decrypt option
     """
-
     # To make sure the user did not choose a value for directory and filepath
     if (directory != None) and (file_path != None):
         click.echo("You cannot select an option for both --directory and --file_path")
@@ -279,11 +271,11 @@ def decrypt(directory, key_path, mode, file_path):
             decrypt_data(load_key(key_path)[hashed_file], file_path, mode)
             click.echo("Done!")
 
-    # for directory encryption
     elif file_path == None:
-        # if user did not enter ask 
+        # if user did not enter ask for key
         if key_path == None:
             key_path = fd.askopenfilename(title="Select the key", initialdir=directory)
+        # for directory encryption
         directory_decrypt(directory, key_path, mode)
         click.echo("Done!")
 
