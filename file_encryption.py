@@ -23,6 +23,7 @@ def main():
 
 
 # ----------------------- Reading and Writing the Keys ---------------------------------
+# returns a hash of the file that it is given
 def hash_file(file_path):
     sha256_hash = hashlib.sha256()
     with open(file_path, "rb") as f:
@@ -32,8 +33,8 @@ def hash_file(file_path):
         hashed_file = sha256_hash.hexdigest()
     return hashed_file
 
+# performes a secure delete
 def secure_delete(file_path, passes=4):
-
     try:
         with open(file_path, "ba+") as delfile:
             length = delfile.tell()
@@ -63,7 +64,6 @@ def load_key(file_name):
 # -------------------------------------- encryption and decryption --------------------------------------
 
 # FOR THE ENCRYPTION AND THE DECRYPTION I AM GOING TO HAVE TO USE THIS LIBRARY BELOW
-# Look it up
 # https://pycryptodome.readthedocs.io/en/latest/src/examples.html
 
 # This function recieves a key and a file path and decrypts that file and outputs a copy called the original files name + _decrypted on the end
@@ -255,7 +255,6 @@ def decrypt(directory, key_path, mode, file_path):
     This is a command that you can use to decrypt a single file or every file in a directory if specified with the --directory command. This fucniton works by using one key for each file to do all of the encrypting and then spits eacho of the keys out for all of the files encrypted in the directory into a single KeyChain file that you can use to decrypt once the program is finished encrypting. You can supply your own key if you want with the --key command.\n
     Note: A key feature for this program is that if you have previously done a directory decrypt you can also use that key to decrypt any of the files in that directory by itself with the single file decrypt option
     """
-
     # To make sure the user did not choose a value for directory and filepath
     if (directory != None) and (file_path != None):
         click.echo("You cannot select an option for both --directory and --file_path")
