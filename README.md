@@ -28,3 +28,8 @@ python file_encryption.py --help<br />
 
 ***Deactivating Virtual Environment Linux/Windows:*** <br />
 deactivate <br />
+
+
+In order to run the tests run this command from the root directory of the project.
+
+'''python -m unittest -v tests/test_file_encryption.py'''
